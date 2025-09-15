@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import ToastProvider from "@/components/ToastProvider";
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,10 +26,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-yellow-100`}>
+        <header className="flex justify-between items-center px-8 py-4 bg-yellow-300 border-b-2 border-orange-700">
+          <Link href={"/"}>
+            <h1 className="text-2xl font-bold text-black">NoteFlow</h1>
+          </Link>
+          <Link
+            href={"/notes"}
+            className="bg-orange-700 text-white px-4 py-2 rounded-lg shadow hover:bg-orange-800"
+          >
+            Catatan Publik
+          </Link>
+        </header>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

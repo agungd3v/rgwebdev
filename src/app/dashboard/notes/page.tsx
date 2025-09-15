@@ -1,5 +1,13 @@
+import React from "react";
+import CreateNote from "@/components/CreateNote";
+import DashboardListNote from "@/components/DashboardListNote";
+
 export default function NotesPage() {
   return (
-    <h1>Notes</h1>
+    <React.Fragment>
+      <CreateNote />
+      <div className="h-8" />
+      <DashboardListNote />
+    </React.Fragment>
   );
 }

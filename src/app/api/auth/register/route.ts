@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
-import { registerRepository } from "@/repository/auth_repository";
+import AuthRepository from "@/repository/auth_repository";
+
+const authRepo = new AuthRepository();
 
 export async function POST(req: Request) {
   const {name, email, password} = await req.json();
-  const authRepo = await registerRepository({name, email, password});
+  const register = await authRepo.register({name, email, password});
 
-  if (authRepo.status) {
-    return NextResponse.json({}, {status: authRepo.response_status});
+  if (!register) {
+    return NextResponse.json({message: "User sudah terdaftar"}, {status: 400});
   }
 
-  return NextResponse.json({
-    status: authRepo.status,
-    token: authRepo.message
-  }, {status: authRepo.response_status});
+  return NextResponse.json({}, {status: 201});
 }

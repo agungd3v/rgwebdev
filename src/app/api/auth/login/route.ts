@@ -1,27 +1,26 @@
 import { NextResponse } from "next/server";
-import { loginRepository } from "@/repository/auth_repository";
+import AuthRepository from "@/repository/auth_repository";
+
+const authRepo = new AuthRepository();
 
 export async function POST(req: Request) {
   const {email, password} = await req.json();
-  const authRepo = await loginRepository({email, password});
+  const login = await authRepo.login({email, password});
 
-  if (authRepo.status) {
-    const res = NextResponse.json({token: authRepo.message});
-    res.cookies.set("token", authRepo.message, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60,
-      path: "/"
-    });
-
-    return res;
+  if (!login) {
+    return NextResponse.json({message: "Email atau password salah"}, {status: 401});
   }
 
-  return NextResponse.json({
-    status: authRepo.status,
-    token: authRepo.message
-  }, {status: authRepo.response_status});
+  const res = NextResponse.json({token: login});
+  res.cookies.set("token", login, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60,
+    path: "/"
+  });
+
+  return res;
 }
 
 export async function DELETE() {

@@ -1,102 +1,68 @@
 import { cookies } from "next/headers";
-import User from "@/models/user_model";
+import { User } from "@/models";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-export const loginRepository = async (data: {email: string, password: string}) => {
-  try {
-    const JWT_SECRET = process.env.JWT_SECRET || "xxx";
+class AuthRepository {
+  private JWT_SECRET: string;
 
-    const user = await User.findOne({where: {email: data.email}});
-    if (!user) return {
-      status: false,
-      response_status: 401,
-      message: "Invalid credentials"
+  constructor() {
+    this.JWT_SECRET = process.env.JWT_SECRET || "xxx";
+  }
+
+  async login(data: loginType): Promise<string | null> {
+    try {
+      const user = await User.findOne({where: {email: data.email}});
+      if (!user) return null;
+
+      const match = await bcrypt.compare(data.password, user.password);
+      if (!match) return null;
+
+      const token = jwt.sign({id: user.id, email: user.email}, this.JWT_SECRET, {expiresIn: "7d"});
+      return token;
+    } catch (error) {
+      console.log("login", error);
+      return null;
     }
+  }
 
-    const match = await bcrypt.compare(data.password, user.password);
-    if (!match) return {
-      status: false,
-      response_status: 401,
-      message: "Invalid credentials"
+  async register(data: registerType): Promise<User | null> {
+    try {
+      const existingUser = await User.findOne({where: {email: data.email}});
+      if (existingUser) return null;
+
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+      const user = await User.create({
+        name: data.name,
+        email: data.email,
+        password: hashedPassword,
+      });
+
+      return user;
+    } catch (error) {
+      console.log("register", error);
+      return null;
     }
+  }
 
-    const token = jwt.sign({id: user.id, email: user.email}, JWT_SECRET, {expiresIn: "7d"});
+  async getUser(): Promise<User | null> {
+    const cookieStore = cookies();
+    const token = (await cookieStore).get("token")?.value;
 
-    return {status: true, message: token};
-  } catch (error) {
-    return {
-      status: false,
-      response_status: 500,
-      message: "Something went wrong"
+    if (!token) return null;
+
+    try {
+      const decoded = jwt.verify(token, this.JWT_SECRET) as any;
+      const user = await User.findByPk(decoded.id, {
+        attributes: ["id", "email"],
+      });
+
+      return user;
+    } catch (error) {
+      console.log("getUser", error);
+      return null;
     }
   }
 }
 
-export const registerRepository = async (data: {name: string, email: string, password: string}) => {
-  try {
-    const existingUser = await User.findOne({where: {email: data.email}});
-    if (existingUser) return {
-      status: false,
-      response_status: 400,
-      message: "Email already registered"
-    }
-
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    await User.create({
-      name: data.name,
-      email: data.email,
-      password: hashedPassword
-    });
-
-    return {
-      status: true,
-      response_status: 201,
-      message: ""
-    }
-  } catch (error) {
-    return {
-      status: false,
-      response_status: 500,
-      message: "Something went wrong"
-    }
-  }
-}
-
-export const getUserRepository = async (fromApi: boolean) => {
-  const cookieStore = cookies();
-  const token = (await cookieStore).get("token")?.value;
-
-  if (!token) return {
-    status: false,
-    response_status: 400,
-    message: "Token not found"
-  }
-
-  try {
-    const JWT_SECRET = process.env.JWT_SECRET || "xxx";
-
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    const user = await User.findByPk(decoded.id, {
-      attributes: ["id", "email"],
-    });
-
-    if (!user) return {
-      status: false,
-      response_status: 400,
-      message: "User not found"
-    }
-
-    return {
-      status: true,
-      response_status: 200,
-      message: fromApi ? user : user.toJSON()
-    }
-  } catch (error) {
-    return {
-      status: false,
-      response_status: 500,
-      message: "Something went wrong"
-    }
-  }
-}
+export default AuthRepository;

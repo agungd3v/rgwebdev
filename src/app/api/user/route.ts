@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { getUserRepository } from "@/repository/auth_repository";
+import AuthRepository from "@/repository/auth_repository";
+
+const authRepo = new AuthRepository();
 
 export async function GET(req: Request) {
-  const authRepo = await getUserRepository(true);
-  if (authRepo.status) {
-    return NextResponse.json({user: authRepo.message});
+  const getUser = await authRepo.getUser();
+  if (!getUser) {
+    return NextResponse.json({message: "user tidak ditemukan"}, {status: 404});
   }
 
-  return NextResponse.json({
-    status: authRepo.status,
-    token: authRepo.message
-  }, {status: authRepo.response_status});
+  return NextResponse.json({user: getUser});
 }
