@@ -1,3 +1,6 @@
+
+## Structure project
+
 ```
 📦 
 ├─ .gitignore
@@ -92,4 +95,50 @@
 │     └─ toggle.ts
 ├─ tsconfig.json
 └─ types.d.ts
+```
+
+## Setup project
+
+```
+create file .env
+```
+
+## Environment
+```
+// development or production for NODE_ENV
+
+NODE_ENV=
+
+DB_HOST=
+DB_USER=
+DB_PASSWORD=
+DB_DATABASE=
+DB_DIALECT=
+
+JWT_SECRET=
+```
+
+## Run migration
+```
+// for migrate all table
+npm run database:migrate
+
+// for drop last migration table
+npm run database:migrate:undo
+
+// for drop all migration table
+npm run database:migrate:undo:all
+```
+
+## Run development mode
+```
+npm install
+npm run dev
+```
+
+## Run production mode
+```
+npm install
+npm run build
+npm run start
 ```
